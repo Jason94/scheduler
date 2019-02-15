@@ -2,18 +2,21 @@ module Component where
 
 import Prelude
 
+import App.Data (Employee)
+import Data.Array.NonEmpty (NonEmptyArray, head)
 import Data.Maybe (Maybe(..))
-
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 
 data Query a = ToggleState a
 
-type State = { on :: Boolean }
+type State =
+  { employee :: Employee
+  }
 
-component :: forall m. H.Component HH.HTML Query Unit Void m
-component =
+component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m
+component employees =
   H.component
     { initialState: const initialState
     , render
@@ -23,26 +26,19 @@ component =
   where
 
   initialState :: State
-  initialState = { on: false }
+  initialState =
+    { employee: head employees
+    }
 
   render :: State -> H.ComponentHTML Query
   render state =
     HH.div_
       [ HH.h1_
-          [ HH.text "Hello world!" ]
-      , HH.p_
-          [ HH.text "Why not toggle this button:" ]
-      , HH.button
-          [ HE.onClick (HE.input_ ToggleState) ]
-          [ HH.text
-              if not state.on
-              then "Don't push me"
-              else "I said don't push me!"
-          ]
+          [ HH.text "Hello foo!" ]
       ]
 
   eval :: Query ~> H.ComponentDSL State Query Void m
   eval = case _ of
     ToggleState next -> do
-      _ <- H.modify (\state -> { on: not state.on })
+      _ <- H.modify (\state -> initialState)
       pure next
