@@ -37,13 +37,13 @@ hasRole role { roles } = isJust $ elemIndex role roles
 
 -- | Given a list of employees, grab each employee that is every role
 groupByRole :: NonEmptyArray Employee -> Map Role (Array Employee)
-groupByRole employees = foldl buildForRole empty
+groupByRole employees = foldl buildForRole empty allRoles
   where
     employeesFor :: Role -> Array Employee
     employeesFor role = filter (hasRole role) (toArray employees)
 
     buildForRole :: Map Role (Array Employee) -> Role -> Map Role (Array Employee)
-    buildForRole m role = insert role-- [] m--(employeesFor role) m
+    buildForRole m role = insert role (employeesFor role) m
 
 type Team =
   { name :: String
