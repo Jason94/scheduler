@@ -57,6 +57,20 @@ employeesDisplay state =
         ([ HH.legend_ [ HH.text $ show role ] ] <>
          map employeeButton (employeesForRole role))
 
+----    Team Display   ----
+teamDisplay :: forall p i. Team -> HH.HTML p i
+teamDisplay team =
+  HH.div
+    [ css "schedule__team" ]
+    [ HH.span_ [ HH.text team.name ] ]
+
+----   Teams Display   ----
+teamsDisplay :: forall p i. NonEmptyArray Team -> HH.HTML p i
+teamsDisplay teams =
+  HH.div
+    [ css "schedule__teams" ]
+    (map teamDisplay (toArray teams))
+
 ---- Schedule Display  ----
 days :: NonEmptyArray String
 days = reverse $ "Friday" : "Thursday" : "Wednesday" : "Tuesday" : singleton "Monday"
@@ -73,22 +87,9 @@ scheduleDisplay _ =
     [ HH.legend_ [ HH.text "Schedule" ]
     , HH.div
         [ css "schedule" ]
-        (toArray $ map dayDisplay days)
+        ([ (teamsDisplay allTeams) ] <>
+         (toArray $ map dayDisplay days))
     ]
-
-----    Team Display   ----
-teamDisplay :: forall p i. Team -> HH.HTML p i
-teamDisplay team =
-  HH.div
-    [ css "schedule__team" ]
-    [ HH.span_ [ HH.text team.name ] ]
-
-----   Teams Display   ----
-teamsDisplay :: forall p i. NonEmptyArray Team -> HH.HTML p i
-teamsDisplay teams =
-  HH.div
-    [ css "schedule__teams" ]
-    (map teamDisplay (toArray teams))
 
 ----   Main Component  ----
 component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m

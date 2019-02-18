@@ -37,6 +37,9 @@
 
 .schedule {
   display: flex;
+
+  padding-left: 150px;
+  height: 800px;
 }
 
 .schedule__day {
@@ -73,4 +76,21 @@
 .schedule__day--friday {
   background-color: #fff0bd;
   border: 1.5px solid #ffdb6e;
+}
+
+.schedule__teams {
+  position: absolute;
+  top: 150px;
+  left: 20px;
+  width: 98%;
+}
+
+.schedule__team {
+  border: 1px solid black;
+
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.schedule__team:not(:last-child) {
+  margin-bottom: 10px;
 }

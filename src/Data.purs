@@ -75,4 +75,6 @@ emptyTeam name roleSlots =
   }
 
 allTeams :: NonEmptyArray Team
-allTeams = singleton (emptyTeam "scca efiling" empty)
+allTeams =
+  (emptyTeam "efiling review" empty)
+  : singleton (emptyTeam "scca efiling" empty)
