@@ -5,6 +5,7 @@ import Prelude
 
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
 import Data.Maybe (Maybe(..))
+import Data.String (toLower)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -63,7 +64,7 @@ days = reverse $ "Friday" : "Thursday" : "Wednesday" : "Tuesday" : singleton "Mo
 dayDisplay :: forall p i. String -> HH.HTML p i
 dayDisplay day =
   HH.div
-    [ css "schedule__day" ]
+    [ css $ "schedule__day" <> " schedule__day--" <> (toLower day) ]
     [ HH.text day ]
 
 scheduleDisplay :: forall p i. State -> HH.HTML p i
@@ -75,8 +76,9 @@ scheduleDisplay _ =
         (toArray $ map dayDisplay days)
     ]
 
-----   Main Component  ----
 
+
+----   Main Component  ----
 component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m
 component employees =
   H.component
