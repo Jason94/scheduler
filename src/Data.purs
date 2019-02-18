@@ -66,3 +66,13 @@ type Team =
   , roleSlots :: Map Role Int
   , roleAssignments :: Map Role (Array Employee)
   }
+
+emptyTeam :: String -> Map Role Int -> Team
+emptyTeam name roleSlots =
+  { name
+  , roleSlots
+  , roleAssignments: empty
+  }
+
+allTeams :: NonEmptyArray Team
+allTeams = singleton (emptyTeam "scca efiling" empty)

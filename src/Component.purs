@@ -76,7 +76,19 @@ scheduleDisplay _ =
         (toArray $ map dayDisplay days)
     ]
 
+----    Team Display   ----
+teamDisplay :: forall p i. Team -> HH.HTML p i
+teamDisplay team =
+  HH.div
+    [ css "schedule__team" ]
+    [ HH.span_ [ HH.text team.name ] ]
 
+----   Teams Display   ----
+teamsDisplay :: forall p i. NonEmptyArray Team -> HH.HTML p i
+teamsDisplay teams =
+  HH.div
+    [ css "schedule__teams" ]
+    (map teamDisplay (toArray teams))
 
 ----   Main Component  ----
 component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m
@@ -88,22 +100,21 @@ component employees =
     , receiver: const Nothing
     }
   where
+    initialState :: State
+    initialState =
+      { selected: head employees
+      }
 
-  initialState :: State
-  initialState =
-    { selected: head employees
-    }
+    render :: State -> H.ComponentHTML Query
+    render state =
+      HH.div
+        [ css "full" ]
+        [ employeesDisplay state
+        , scheduleDisplay state
+        ]
 
-  render :: State -> H.ComponentHTML Query
-  render state =
-    HH.div
-      [ css "full" ]
-      [ employeesDisplay state
-      , scheduleDisplay state
-      ]
-
-  eval :: Query ~> H.ComponentDSL State Query Void m
-  eval = case _ of
-    Select employee next -> do
-      _ <- H.modify_ $ selectEmployee employee
-      pure next
+    eval :: Query ~> H.ComponentDSL State Query Void m
+    eval = case _ of
+      Select employee next -> do
+        _ <- H.modify_ $ selectEmployee employee
+        pure next
