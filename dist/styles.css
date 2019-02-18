@@ -1,3 +1,16 @@
+//html, body { height: 100%; }
+//.full { height: 100%; }
+
+/// Selector Module ///
+
+.selector {
+  display: flex;
+}
+
+.selector__panel {
+  flex-grow: 1;
+}
+
 .selector__button {
   height: 35px;
   padding: 0px 15px;
@@ -18,4 +31,15 @@
 .selector__button--selected {
   background-color: #008CBA;
   color: white;
+}
+
+/// Schedule Module ///
+
+.schedule {
+//  display: flex;
+}
+
+.schedule__day {
+  border: 1px solid forest;
+  background-color: green;
 }

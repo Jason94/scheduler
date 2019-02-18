@@ -3,7 +3,7 @@ module Component where
 import App.Data
 import Prelude
 
-import Data.Array.NonEmpty (NonEmptyArray, head, toArray)
+import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -31,8 +31,9 @@ selectEmployee employee = _ { selected = employee }
 employeesDisplay :: State -> H.ComponentHTML Query
 employeesDisplay state =
   HH.div_
-    [ HH.h1_ [ HH.text "Employees" ]
-    , HH.div_ $ map roleDisplay (toArray allRoles)
+    [ HH.div
+        [ css "selector" ]
+        (map roleDisplay (toArray allRoles))
     ]
   where
     employeeButtonClass :: Employee -> State -> String
@@ -50,9 +51,29 @@ employeesDisplay state =
 
     roleDisplay :: Role -> H.ComponentHTML Query
     roleDisplay role =
-      HH.fieldset_ $
-        [ HH.legend_ [ HH.text $ show role ] ] <>
-        map employeeButton (employeesForRole role)
+      HH.fieldset
+        [ css "selector__panel" ]
+        ([ HH.legend_ [ HH.text $ show role ] ] <>
+         map employeeButton (employeesForRole role))
+
+---- Schedule Display  ----
+days :: NonEmptyArray String
+days = reverse $ "Friday" : "Thursday" : "Wednesday" : "Tuesday" : singleton "Monday"
+
+dayDisplay :: forall p i. String -> HH.HTML p i
+dayDisplay day =
+  HH.div
+    [ css "schedule__day" ]
+    [ HH.text day ]
+
+scheduleDisplay :: forall p i. State -> HH.HTML p i
+scheduleDisplay _ =
+  HH.fieldset_
+    [ HH.legend_ [ HH.text "Schedule" ]
+    , HH.div
+        [ css "schedule" ]
+        (toArray $ map dayDisplay days)
+    ]
 
 ----   Main Component  ----
 
@@ -73,8 +94,10 @@ component employees =
 
   render :: State -> H.ComponentHTML Query
   render state =
-    HH.div_
+    HH.div
+      [ css "full" ]
       [ employeesDisplay state
+      , scheduleDisplay state
       ]
 
   eval :: Query ~> H.ComponentDSL State Query Void m
