@@ -1,0 +1,21 @@
+.selector__button {
+  height: 35px;
+  padding: 0px 15px;
+  margin-right: 5px;
+
+  background: transparent;
+  border: 2px solid #0099CC;
+  border-radius: 5px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.selector__button:not(.selector__button--selected):hover {
+  background-color: #b3ecff;
+}
+
+.selector__button--selected {
+  background-color: #008CBA;
+  color: white;
+}
