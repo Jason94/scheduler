@@ -3,6 +3,7 @@ module Component where
 import App.Data
 import Prelude
 
+import Data.Array (concatMap)
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
 import Data.Maybe (Maybe(..))
 import Data.String (toLower)
@@ -57,38 +58,38 @@ employeesDisplay state =
         ([ HH.legend_ [ HH.text $ show role ] ] <>
          map employeeButton (employeesForRole role))
 
-----    Team Display   ----
-teamDisplay :: forall p i. Team -> HH.HTML p i
-teamDisplay team =
-  HH.div
-    [ css "schedule__team" ]
-    [ HH.span_ [ HH.text team.name ] ]
-
-----   Teams Display   ----
-teamsDisplay :: forall p i. NonEmptyArray Team -> HH.HTML p i
-teamsDisplay teams =
-  HH.div
-    [ css "schedule__teams" ]
-    (map teamDisplay (toArray teams))
-
 ---- Schedule Display  ----
-days :: NonEmptyArray String
-days = reverse $ "Friday" : "Thursday" : "Wednesday" : "Tuesday" : singleton "Monday"
+dayDisplays :: forall p i. Array (HH.HTML p i)
+dayDisplays = [ HH.span_ [] ] <> (map dayDisplay days)
+  where
+    dayDisplay :: Day -> HH.HTML p i
+    dayDisplay day = HH.span
+      [ css "schedule__day" ]
+      [ HH.text $ show day ]
 
-dayDisplay :: forall p i. String -> HH.HTML p i
-dayDisplay day =
-  HH.div
-    [ css $ "schedule__day" <> " schedule__day--" <> (toLower day) ]
-    [ HH.text day ]
+teamDisplays :: forall p i. State -> Array (HH.HTML p i)
+teamDisplays state = concatMap teamDisplay (toArray allTeams)
+  where
+    teamHeader :: Team -> HH.HTML p i
+    teamHeader { name } = HH.span
+                            [ css "schedule__team-label" ]
+                            [ HH.text name ]
+
+    teamCell :: Team -> String -> HH.HTML p i
+    teamCell team day = HH.span
+                          [ css "schedule__team-cell" ]
+                          [ HH.text team.name ]
+
+    teamDisplay :: Team -> Array (HH.HTML p i)
+    teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)
 
 scheduleDisplay :: forall p i. State -> HH.HTML p i
-scheduleDisplay _ =
+scheduleDisplay state =
   HH.fieldset_
     [ HH.legend_ [ HH.text "Schedule" ]
     , HH.div
         [ css "schedule" ]
-        ([ (teamsDisplay allTeams) ] <>
-         (toArray $ map dayDisplay days))
+        $ dayDisplays <> (teamDisplays state)
     ]
 
 ----   Main Component  ----

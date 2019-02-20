@@ -7,7 +7,19 @@ import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
 import Data.Foldable (foldl)
 import Data.Map (Map, empty, insert, lookup)
 import Data.Maybe (fromMaybe, isJust)
-import Data.Newtype (class Newtype)
+
+data Day = Monday | Tuesday | Wednesday | Thursday | Friday
+derive instance eqDay :: Eq Day
+derive instance ordDay :: Ord Day
+instance showDay :: Show Day where
+  show Monday = "Monday"
+  show Tuesday = "Tuesday"
+  show Wednesday = "Wednesday"
+  show Thursday = "Thursday"
+  show Friday = "Friday"
+
+days :: Array Day
+days = [ Monday, Tuesday, Wednesday, Thursday, Friday ]
 
 data Role = Manager | Programmer | Analyst
 derive instance eqRole :: Eq Role
@@ -19,9 +31,6 @@ instance showRole :: Show Role where
 
 allRoles :: NonEmptyArray Role
 allRoles = Manager : Programmer : singleton Analyst
-
-newtype EmployeeName = EmployeeName String
-derive instance newtypeEmployeeName :: Newtype EmployeeName _
 
 type Employee =
   { name :: String

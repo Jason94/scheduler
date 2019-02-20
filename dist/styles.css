@@ -36,61 +36,16 @@
 /* Schedule Module */
 
 .schedule {
-  display: flex;
+  display: grid;
 
-  padding-left: 150px;
-  height: 800px;
+  grid-template-columns: [teams] 15% repeat(5, 17% [day]);
+  grid-template-rows: [days] 20px;
 }
 
 .schedule__day {
-  padding: 10px;
-  border-radius: 8px;
-
-  flex-grow: 1;
-}
-
-.schedule__day:not(:last-child) {
-  margin-right: 10px;
-}
-
-.schedule__day--monday {
-  background-color: #c6d6b0;
-  border: 1.5px solid #848c57;
-}
-
-.schedule__day--tuesday {
-  background-color: #f6cbbc;
-  border: 1.5px solid #d88081;
-}
-
-.schedule__day--wednesday {
-  background-color: #94b0b7;
-  border: 1.5px solid #7697a0;
-}
-
-.schedule__day--thursday {
-  background-color: #e9e2ec;
-  border: 1.5px solid #e6bfdb;
-}
-
-.schedule__day--friday {
-  background-color: #fff0bd;
-  border: 1.5px solid #ffdb6e;
-}
-
-.schedule__teams {
-  position: absolute;
-  top: 150px;
-  left: 20px;
-  width: 98%;
-}
-
-.schedule__team {
   border: 1px solid black;
-
-  background-color: rgba(255, 255, 255, 0.7);
 }
 
-.schedule__team:not(:last-child) {
-  margin-bottom: 10px;
+.schedule__team-cell {
+  height: 150px;
 }
