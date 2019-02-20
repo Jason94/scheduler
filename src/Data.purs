@@ -2,7 +2,7 @@ module App.Data where
 
 import Prelude
 
-import Data.Array (filter)
+import Data.Array (filter, nubEq)
 import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
 import Data.Foldable (foldl)
 import Data.Map (Map, empty, insert, lookup)
@@ -73,7 +73,7 @@ employeesForRole role = fromMaybe [] $ lookup role employeesByRole
 type Team =
   { name :: String
   , roleSlots :: Map Role Int
-  , roleAssignments :: Map Role (Array Employee)
+  , roleAssignments :: Map Day (Map Role (Array Employee))
   }
 
 emptyTeam :: String -> Map Role Int -> Team
@@ -82,6 +82,24 @@ emptyTeam name roleSlots =
   , roleSlots
   , roleAssignments: empty
   }
+
+-- | Get the employees assigned to a particular team of a particular role on a given day.
+getAssigments :: Team -> Day -> Role -> Array Employee
+getAssigments { roleAssignments } day role = fromMaybe [] $ do
+  roles <- lookup day roleAssignments
+  lookup role roles
+
+-- | Assign an employee to a team on a given day as a given role. Will not double assign.
+assignEmployee :: Team -> Employee -> Day -> Role -> Team
+assignEmployee team employee day role = team { roleAssignments = newAssignments }
+  where
+    newEmployees :: Array Employee
+    newEmployees = nubEq $ [employee] <> (getAssigments team day role)
+
+    newAssignments :: Map Day (Map Role (Array Employee))
+    newAssignments =
+      let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
+      in insert day roleMap team.roleAssignments
 
 allTeams :: NonEmptyArray Team
 allTeams =

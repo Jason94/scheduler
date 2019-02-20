@@ -75,10 +75,11 @@ teamDisplays state = concatMap teamDisplay (toArray allTeams)
                             [ css "schedule__team-label" ]
                             [ HH.text name ]
 
-    teamCell :: Team -> String -> HH.HTML p i
+    teamCell :: Team -> Day -> HH.HTML p i
     teamCell team day = HH.span
                           [ css "schedule__team-cell" ]
-                          [ HH.text team.name ]
+                          [ HH.ul_ $ map
+                          ]
 
     teamDisplay :: Team -> Array (HH.HTML p i)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)
