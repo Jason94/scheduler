@@ -44,10 +44,13 @@ adam = { name: "Adam", roles: singleton Programmer }
 ivan :: Employee
 ivan = { name: "Ivan", roles: singleton Programmer }
 
+frank :: Employee
+frank = { name: "Frank", roles: Analyst : singleton Manager }
+
 allEmployees :: NonEmptyArray Employee
 allEmployees =
   { name: "Amanda", roles: singleton Manager }
-  : { name: "Frank", roles: Analyst : singleton Manager }
+  : frank
   : { name: "Donna", roles: singleton Analyst }
   : { name: "Ellen", roles: singleton Analyst }
   : { name: "Judy", roles: singleton Analyst }
@@ -124,6 +127,7 @@ unassignEmployee team employee day role = team { roleAssignments = newAssignment
 reviewEfiling :: Team
 reviewEfiling =
   (\t -> (assignEmployee t ivan Monday Programmer)) <<<
+  (\t -> (assignEmployee t frank Monday Manager)) <<<
   (\t -> (assignEmployee t ivan Tuesday Programmer)) $
   (assignEmployee (emptyTeam "efiling review" empty) adam Monday Programmer )
 
