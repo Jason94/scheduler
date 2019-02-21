@@ -5,6 +5,7 @@ import Prelude
 
 import Data.Array (concatMap)
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
+import Data.Map (lookup)
 import Data.Maybe (Maybe(..))
 import Data.String (toLower)
 import Halogen as H
@@ -78,8 +79,10 @@ teamDisplays state = concatMap teamDisplay (toArray allTeams)
     teamCell :: Team -> Day -> HH.HTML p i
     teamCell team day = HH.span
                           [ css "schedule__team-cell" ]
-                          [ HH.ul_ $ map
+                          [ HH.ul_ $ map employeeLine (getAssigments team day Programmer)
                           ]
+      where
+        employeeLine { name } = HH.li_ [ HH.text name ]
 
     teamDisplay :: Team -> Array (HH.HTML p i)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)

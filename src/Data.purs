@@ -37,6 +37,13 @@ type Employee =
   , roles :: NonEmptyArray Role
   }
 
+-- | Dummy employee data
+adam :: Employee
+adam = { name: "Adam", roles: singleton Programmer }
+
+ivan :: Employee
+ivan = { name: "Ivan", roles: singleton Programmer }
+
 allEmployees :: NonEmptyArray Employee
 allEmployees =
   { name: "Amanda", roles: singleton Manager }
@@ -46,8 +53,8 @@ allEmployees =
   : { name: "Judy", roles: singleton Analyst }
   : { name: "Travis", roles: Manager : singleton Programmer }
   : { name: "Doug", roles: singleton Programmer }
-  : { name: "Adam", roles: singleton Programmer }
-  : { name: "Ivan", roles: singleton Programmer }
+  : adam
+  : ivan
   : singleton { name: "Jason", roles: singleton Programmer }
 
 -- | Check if an employee has a given role
@@ -101,7 +108,14 @@ assignEmployee team employee day role = team { roleAssignments = newAssignments 
       let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
       in insert day roleMap team.roleAssignments
 
+-- | Dummy team data
+reviewEfiling :: Team
+reviewEfiling =
+  (\t -> (assignEmployee t ivan Monday Programmer)) <<<
+  (\t -> (assignEmployee t ivan Tuesday Programmer)) $
+  (assignEmployee (emptyTeam "efiling review" empty) adam Monday Programmer )
+
 allTeams :: NonEmptyArray Team
 allTeams =
-  (emptyTeam "efiling review" empty)
+  reviewEfiling
   : singleton (emptyTeam "scca efiling" empty)
