@@ -2,7 +2,7 @@ module App.Data where
 
 import Prelude
 
-import Data.Array (filter, nubEq)
+import Data.Array (delete, filter, nubEq)
 import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
 import Data.Foldable (foldl)
 import Data.Map (Map, empty, insert, lookup)
@@ -102,6 +102,18 @@ assignEmployee team employee day role = team { roleAssignments = newAssignments 
   where
     newEmployees :: Array Employee
     newEmployees = nubEq $ [employee] <> (getAssigments team day role)
+
+    newAssignments :: Map Day (Map Role (Array Employee))
+    newAssignments =
+      let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
+      in insert day roleMap team.roleAssignments
+
+-- | Remove an employee from the schedule. No-op if not assigned as such.
+unassignEmployee :: Team -> Employee -> Day -> Role -> Team
+unassignEmployee team employee day role = team { roleAssignments = newAssignments }
+  where
+    newEmployees :: Array Employee
+    newEmployees = delete employee (getAssigments team day role)
 
     newAssignments :: Map Day (Map Role (Array Employee))
     newAssignments =

@@ -3,7 +3,7 @@ module Component where
 import App.Data
 import Prelude
 
-import Data.Array (concatMap)
+import Data.Array (concatMap, cons, delete)
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
 import Data.Map (lookup)
 import Data.Maybe (Maybe(..))
@@ -19,15 +19,22 @@ css :: forall r i. String -> HH.IProp ( class :: String | r ) i
 css = HP.class_ <<< HH.ClassName
 
 ----       Types       ----
-data Query a = Select Employee a
+data Query a = Select Employee a | Unassign Team Employee Day Role a
 
 type State =
   { selected :: Employee
+  , teams :: Array Team
   }
 
 -- | Select an employee to be inserted into the schedule
 selectEmployee :: Employee -> State -> State
 selectEmployee employee = _ { selected = employee }
+
+unassignEmployeeFromState :: Team -> Employee -> Day -> Role -> State -> State
+unassignEmployeeFromState t e d r s@{ teams }= s { teams = newTeams }
+  where
+    newTeams :: Array Team
+    newTeams = cons (unassignEmployee t e d r) (delete t teams)
 
 ---- Employees Display ----
 
@@ -68,26 +75,37 @@ dayDisplays = [ HH.span_ [] ] <> (map dayDisplay days)
       [ css "schedule__day" ]
       [ HH.text $ show day ]
 
-teamDisplays :: forall p i. State -> Array (HH.HTML p i)
-teamDisplays state = concatMap teamDisplay (toArray allTeams)
+teamDisplays :: State -> Array (H.ComponentHTML Query)
+teamDisplays state = concatMap teamDisplay state.teams
   where
-    teamHeader :: Team -> HH.HTML p i
+    teamHeader :: Team -> H.ComponentHTML Query
     teamHeader { name } = HH.span
                             [ css "schedule__team-label" ]
                             [ HH.text name ]
 
-    teamCell :: Team -> Day -> HH.HTML p i
+    teamCell :: Team -> Day -> H.ComponentHTML Query
     teamCell team day = HH.span
                           [ css "schedule__team-cell" ]
-                          [ HH.ul_ $ map employeeLine (getAssigments team day Programmer)
-                          ]
+                          (toArray $ map roleRow allRoles)
       where
-        employeeLine { name } = HH.li_ [ HH.text name ]
+        employeeLine :: Role -> Employee -> H.ComponentHTML Query
+        employeeLine role e@{ name } =
+          HH.button
+            [ css "selector__button"
+            , HE.onClick (HE.input_ $ Unassign team e day role)
+            ]
+            [ HH.text name ]
 
-    teamDisplay :: Team -> Array (HH.HTML p i)
+        roleRow :: Role -> H.ComponentHTML Query
+        roleRow role =
+          HH.div
+            [ css "schedule__role-row" ]
+            (map (employeeLine role) $ getAssigments team day role)
+
+    teamDisplay :: Team -> Array (H.ComponentHTML Query)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)
 
-scheduleDisplay :: forall p i. State -> HH.HTML p i
+scheduleDisplay :: State -> H.ComponentHTML Query
 scheduleDisplay state =
   HH.fieldset_
     [ HH.legend_ [ HH.text "Schedule" ]
@@ -109,6 +127,7 @@ component employees =
     initialState :: State
     initialState =
       { selected: head employees
+      , teams: toArray allTeams
       }
 
     render :: State -> H.ComponentHTML Query
@@ -123,4 +142,7 @@ component employees =
     eval = case _ of
       Select employee next -> do
         _ <- H.modify_ $ selectEmployee employee
+        pure next
+      Unassign team employee day role next -> do
+        _ <- H.modify_ $ unassignEmployeeFromState team employee day role
         pure next
