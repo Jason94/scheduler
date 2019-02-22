@@ -19,7 +19,7 @@ css :: forall r i. String -> HH.IProp ( class :: String | r ) i
 css = HP.class_ <<< HH.ClassName
 
 ----       Types       ----
-data Query a = Select Employee a | Unassign Team Employee Day Role a
+data Query a = Select Employee a | Assign Team Employee Day Role a | Unassign Team Employee Day Role a
 
 type State =
   { selected :: Employee
@@ -31,10 +31,16 @@ selectEmployee :: Employee -> State -> State
 selectEmployee employee = _ { selected = employee }
 
 unassignEmployeeFromState :: Team -> Employee -> Day -> Role -> State -> State
-unassignEmployeeFromState t e d r s@{ teams }= s { teams = newTeams }
+unassignEmployeeFromState t e d r s@{ teams } = s { teams = newTeams }
   where
     newTeams :: Array Team
     newTeams = cons (unassignEmployee t e d r) (delete t teams)
+
+assignEmployeeFromState:: Team -> Employee -> Day -> Role -> State -> State
+assignEmployeeFromState t e d r s@{ teams } = s { teams = newTeams }
+  where
+    newTeams :: Array Team
+    newTeams = cons (assignEmployee t e d r) (delete t teams)
 
 ---- Employees Display ----
 
@@ -76,7 +82,7 @@ dayDisplays = [ HH.span_ [] ] <> (map dayDisplay days)
       [ HH.text $ show day ]
 
 teamDisplays :: State -> Array (H.ComponentHTML Query)
-teamDisplays state = concatMap teamDisplay state.teams
+teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
   where
     teamHeader :: Team -> H.ComponentHTML Query
     teamHeader { name } = HH.span
@@ -99,7 +105,9 @@ teamDisplays state = concatMap teamDisplay state.teams
         addButton :: Role -> H.ComponentHTML Query
         addButton role =
           HH.button
-            [ css "schedule__add" ]
+            [ css "schedule__add"
+            , HE.onClick (HE.input_ $ Assign team state.selected day role)
+            ]
             [ HH.text "+" ]
 
         roleRow :: Role -> H.ComponentHTML Query
@@ -149,6 +157,9 @@ component employees =
     eval = case _ of
       Select employee next -> do
         _ <- H.modify_ $ selectEmployee employee
+        pure next
+      Assign team employee day role next -> do
+        _ <- H.modify_ $ assignEmployeeFromState team employee day role
         pure next
       Unassign team employee day role next -> do
         _ <- H.modify_ $ unassignEmployeeFromState team employee day role

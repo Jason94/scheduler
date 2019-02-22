@@ -2,7 +2,7 @@ module App.Data where
 
 import Prelude
 
-import Data.Array (delete, filter, nubEq)
+import Data.Array (delete, filter, nubEq, snoc, sortWith)
 import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
 import Data.Foldable (foldl)
 import Data.Map (Map, empty, insert, lookup)
@@ -86,6 +86,9 @@ type Team =
   , roleAssignments :: Map Day (Map Role (Array Employee))
   }
 
+sortTeams :: Array Team -> Array Team
+sortTeams = sortWith (_.name)
+
 emptyTeam :: String -> Map Role Int -> Team
 emptyTeam name roleSlots =
   { name
@@ -104,7 +107,7 @@ assignEmployee :: Team -> Employee -> Day -> Role -> Team
 assignEmployee team employee day role = team { roleAssignments = newAssignments }
   where
     newEmployees :: Array Employee
-    newEmployees = nubEq $ [employee] <> (getAssigments team day role)
+    newEmployees = nubEq $ snoc (getAssigments team day role) employee
 
     newAssignments :: Map Day (Map Role (Array Employee))
     newAssignments =
