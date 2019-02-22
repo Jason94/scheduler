@@ -95,6 +95,7 @@ dayDisplays = [ HH.span_ [] ] <> (map dayDisplay days)
       [ css "schedule__day" ]
       [ HH.text $ show day ]
 
+-- | Buttons that add the selected employee to all five days.
 addFiveButtons :: State -> Team -> H.ComponentHTML Query
 addFiveButtons state team =
   HH.div
@@ -126,10 +127,16 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
       ]
 
     teamCell :: Team -> Day -> H.ComponentHTML Query
-    teamCell team day = HH.span
-                          [ css "schedule__team-cell" ]
-                          (toArray $ map roleRow allRoles)
+    teamCell team day =
+      HH.span
+        [ css className ]
+        (toArray $ map roleRow allRoles)
       where
+        className :: String
+        className = if totalUnassigned day team > 0
+                    then "schedule__team-cell schedule__team-cell--unassigned"
+                    else "schedule__team-cell"
+
         employeeButton :: Role -> Employee -> H.ComponentHTML Query
         employeeButton role e@{ name } =
           HH.button

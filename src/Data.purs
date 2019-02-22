@@ -2,11 +2,11 @@ module App.Data where
 
 import Prelude
 
-import Data.Array (delete, filter, nubEq, snoc, sortWith)
+import Data.Array (delete, filter, length, nubEq, snoc, sortWith)
 import Data.Array as Arr
 import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
-import Data.Foldable (foldl)
-import Data.Map (Map, empty, insert, lookup)
+import Data.Foldable (fold, foldMap, foldl, sum)
+import Data.Map (Map, empty, insert, lookup, values)
 import Data.Maybe (fromMaybe, isJust)
 
 data Day = Monday | Tuesday | Wednesday | Thursday | Friday
@@ -108,11 +108,26 @@ setRoleSlots role n t@{ roleSlots } = t { roleSlots = newSlots }
     newSlots :: Map Role Int
     newSlots = insert role n roleSlots
 
+-- | Get the slots on a team for a role.
+getRoleSlots :: Role -> Team -> Int
+getRoleSlots role { roleSlots } = fromMaybe 0 $ lookup role roleSlots
+
 -- | Get the employees assigned to a particular team of a particular role on a given day.
 getAssigments :: Team -> Day -> Role -> Array Employee
 getAssigments { roleAssignments } day role = fromMaybe [] $ do
   roles <- lookup day roleAssignments
   lookup role roles
+
+-- | Get the number of employees assigned to a particular day for a particular role.
+numAssigned :: Day -> Role -> Team -> Int
+numAssigned day role team = length $ getAssigments team day role
+
+-- | Get the total number of employees that still need to be assigned for all roles on a day.
+totalUnassigned :: Day -> Team -> Int
+totalUnassigned day team =
+  let totalAssigned = sum $ map (\r -> numAssigned day r team) allRoles
+      totalNeeded   = sum $ values team.roleSlots
+  in totalNeeded - totalAssigned
 
 -- | Assign an employee to a team on a given day as a given role. Will not double assign.
 assignEmployee :: Team -> Employee -> Day -> Role -> Team
