@@ -1,6 +1,17 @@
 //html, body { height: 100%; }
 //.full { height: 100%; }
 
+/* Atomics */
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.margin-bottom-5px {
+  margin-bottom: 5px;
+}
+
 /* Selector Module */
 
 .selector {

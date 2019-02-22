@@ -3,10 +3,11 @@ module Component where
 import App.Data
 import Prelude
 
-import Data.Array (concatMap, cons, delete)
+import Data.Array (concatMap, cons, delete, foldl)
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
-import Data.Map (lookup)
+import Data.Map (keys, lookup)
 import Data.Maybe (Maybe(..))
+import Data.Set (toUnfoldable)
 import Data.String (toLower)
 import Halogen as H
 import Halogen.HTML as HH
@@ -19,7 +20,11 @@ css :: forall r i. String -> HH.IProp ( class :: String | r ) i
 css = HP.class_ <<< HH.ClassName
 
 ----       Types       ----
-data Query a = Select Employee a | Assign Team Employee Day Role a | Unassign Team Employee Day Role a
+data Query a =
+  Select Employee a
+  | Assign Team Employee Day Role a
+  | AssignAllDays Team Employee Role a
+  | Unassign Team Employee Day Role a
 
 type State =
   { selected :: Employee
@@ -44,6 +49,12 @@ assignEmployeeFromState t e d r s@{ teams } =
     where
       newTeams :: Array Team
       newTeams = cons (assignEmployee t e d r) (delete t teams)
+
+assignEmployeeAllDaysFromState :: Team -> Employee -> Role -> State -> State
+assignEmployeeAllDaysFromState t e r s@{ teams } = s { teams = newTeams }
+  where
+    newTeams :: Array Team
+    newTeams = cons (assignEmployeeAllDays t e r) (delete t teams)
 
 ---- Employees Display ----
 
@@ -84,18 +95,40 @@ dayDisplays = [ HH.span_ [] ] <> (map dayDisplay days)
       [ css "schedule__day" ]
       [ HH.text $ show day ]
 
+addFiveButtons :: State -> Team -> H.ComponentHTML Query
+addFiveButtons state team =
+  HH.div
+    [ css "flex-column" ]
+    (map addFiveButton (toUnfoldable $ keys team.roleSlots))
+  where
+    className :: Role -> String
+    className role = "schedule__add margin-bottom-5px" <> if hasRole role state.selected
+                                                          then ""
+                                                          else " schedule__add--disabled"
+
+    addFiveButton :: Role -> H.ComponentHTML Query
+    addFiveButton role =
+      HH.button
+        [ css $ className role
+        , HE.onClick (HE.input_ $ AssignAllDays team state.selected role)
+        ]
+        [ HH.text $ show role ]
+
 teamDisplays :: State -> Array (H.ComponentHTML Query)
 teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
   where
     teamHeader :: Team -> H.ComponentHTML Query
-    teamHeader { name } = HH.span
-                            [ css "schedule__team-label" ]
-                            [ HH.text name ]
+    teamHeader team@{ name } = HH.div_
+      [ HH.span
+          [ css "schedule__team-label" ]
+          [ HH.text name ]
+      , addFiveButtons state team
+      ]
 
     teamCell :: Team -> Day -> H.ComponentHTML Query
     teamCell team day = HH.span
                           [ css "schedule__team-cell" ]
-                          (toArray $ map (roleRow day) allRoles)
+                          (toArray $ map roleRow allRoles)
       where
         employeeButton :: Role -> Employee -> H.ComponentHTML Query
         employeeButton role e@{ name } =
@@ -105,8 +138,8 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
             ]
             [ HH.text name ]
 
-        addButton :: Day -> Role -> H.ComponentHTML Query
-        addButton day role =
+        addButton :: Role -> H.ComponentHTML Query
+        addButton role =
           let classes = if canAssign team state.selected day role
                         then "schedule__add"
                         else "schedule__add schedule__add--disabled"
@@ -122,13 +155,13 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
             [ css "schedule__row-label" ]
             [ HH.text $ (show role) <> ": " ]
 
-        roleRow :: Day -> Role -> H.ComponentHTML Query
-        roleRow day role =
+        roleRow :: Role -> H.ComponentHTML Query
+        roleRow role =
           HH.div
             [ css "schedule__role-row" ] $
             [ roleLabel role ]
               <> (map (employeeButton role) $ getAssigments team day role)
-              <> [ addButton day role ]
+              <> [ addButton role ]
 
     teamDisplay :: Team -> Array (H.ComponentHTML Query)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)
@@ -170,6 +203,9 @@ component employees =
     eval = case _ of
       Select employee next -> do
         _ <- H.modify_ $ selectEmployee employee
+        pure next
+      AssignAllDays team employee role next -> do
+        _ <- H.modify_ $ assignEmployeeAllDaysFromState team employee role
         pure next
       Assign team employee day role next -> do
         _ <- H.modify_ $ assignEmployeeFromState team employee day role

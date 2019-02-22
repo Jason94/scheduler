@@ -101,6 +101,13 @@ emptyTeam name roleSlots =
   , roleAssignments: empty
   }
 
+-- | Set the number of slots for a role in a team
+setRoleSlots :: Role -> Int -> Team -> Team
+setRoleSlots role n t@{ roleSlots } = t { roleSlots = newSlots }
+  where
+    newSlots :: Map Role Int
+    newSlots = insert role n roleSlots
+
 -- | Get the employees assigned to a particular team of a particular role on a given day.
 getAssigments :: Team -> Day -> Role -> Array Employee
 getAssigments { roleAssignments } day role = fromMaybe [] $ do
@@ -118,6 +125,10 @@ assignEmployee team employee day role = team { roleAssignments = newAssignments 
     newAssignments =
       let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
       in insert day roleMap team.roleAssignments
+
+-- | Assign an employee to a team as a given role for all days. Will not double assign.
+assignEmployeeAllDays :: Team -> Employee -> Role -> Team
+assignEmployeeAllDays team employee role = foldl (\newT d -> assignEmployee newT employee d role) team days
 
 -- | An employee can be assigned if they have the right role and aren't on the team.
 canAssign :: Team -> Employee -> Day -> Role -> Boolean
@@ -140,12 +151,19 @@ unassignEmployee team employee day role = team { roleAssignments = newAssignment
 -- | Dummy team data
 reviewEfiling :: Team
 reviewEfiling =
-  (\t -> (assignEmployee t ivan Monday Programmer)) <<<
-  (\t -> (assignEmployee t frank Monday Manager)) <<<
-  (\t -> (assignEmployee t ivan Tuesday Programmer)) $
-  (assignEmployee (emptyTeam "efiling review" empty) adam Monday Programmer )
+  (setRoleSlots Analyst 2) <<<
+  (setRoleSlots Programmer 3) <<<
+  (setRoleSlots Manager 1) $
+  emptyTeam "EFiling-Review" empty
+
+support :: Team
+support =
+  (setRoleSlots Analyst 3) <<<
+  (setRoleSlots Manager 1) $
+  emptyTeam "Support" empty
 
 allTeams :: NonEmptyArray Team
 allTeams =
   reviewEfiling
+  : support
   : singleton (emptyTeam "scca efiling" empty)
