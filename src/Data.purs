@@ -163,6 +163,10 @@ unassignEmployee team employee day role = team { roleAssignments = newAssignment
       let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
       in insert day roleMap team.roleAssignments
 
+-- | Remove all employees assigned.
+unassignAll :: Team -> Team
+unassignAll = _ { roleAssignments = empty }
+
 -- | Dummy team data
 reviewEfiling :: Team
 reviewEfiling =
@@ -177,8 +181,15 @@ support =
   (setRoleSlots Manager 1) $
   emptyTeam "Support" empty
 
+sccaEfiling :: Team
+sccaEfiling =
+  (setRoleSlots Analyst 1) <<<
+  (setRoleSlots Programmer 2) <<<
+  (setRoleSlots Manager 1) $
+  (emptyTeam "Scca-EFiling" empty)
+
 allTeams :: NonEmptyArray Team
 allTeams =
   reviewEfiling
   : support
-  : singleton (emptyTeam "scca efiling" empty)
+  : singleton sccaEfiling

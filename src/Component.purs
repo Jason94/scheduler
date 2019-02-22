@@ -25,6 +25,7 @@ data Query a =
   | Assign Team Employee Day Role a
   | AssignAllDays Team Employee Role a
   | Unassign Team Employee Day Role a
+  | UnassignAll a
 
 type State =
   { selected :: Employee
@@ -55,6 +56,9 @@ assignEmployeeAllDaysFromState t e r s@{ teams } = s { teams = newTeams }
   where
     newTeams :: Array Team
     newTeams = cons (assignEmployeeAllDays t e r) (delete t teams)
+
+unassignAllFromState :: State -> State
+unassignAllFromState s@{ teams } = s { teams = map unassignAll teams }
 
 ---- Employees Display ----
 
@@ -181,6 +185,15 @@ scheduleDisplay state =
         [ css "schedule" ]
         $ dayDisplays <> (teamDisplays state)
     ]
+----       Sidebar     ----
+sidebar :: State -> H.ComponentHTML Query
+sidebar state =
+  HH.div
+    [ css "sidebar" ]
+    [ HH.button
+        [ HE.onClick $ HE.input_ UnassignAll ]
+        [ HH.text "Clear All" ]
+    ]
 
 ----   Main Component  ----
 component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m
@@ -201,9 +214,13 @@ component employees =
     render :: State -> H.ComponentHTML Query
     render state =
       HH.div
-        [ css "full" ]
-        [ employeesDisplay state
-        , scheduleDisplay state
+        [ css "full flex-row" ]
+        [ HH.div
+            [ css "content" ]
+            [ employeesDisplay state
+            , scheduleDisplay state
+            ]
+        , sidebar state
         ]
 
     eval :: Query ~> H.ComponentDSL State Query Void m
@@ -219,4 +236,7 @@ component employees =
         pure next
       Unassign team employee day role next -> do
         _ <- H.modify_ $ unassignEmployeeFromState team employee day role
+        pure next
+      UnassignAll next -> do
+        _ <- H.modify_ unassignAllFromState
         pure next

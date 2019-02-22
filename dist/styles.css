@@ -8,8 +8,17 @@
   flex-direction: column;
 }
 
+.flex-row {
+  display: flex;
+}
+
 .margin-bottom-5px {
   margin-bottom: 5px;
+}
+
+/* Content Module */
+.content {
+  width: 82%;
 }
 
 /* Selector Module */
@@ -116,4 +125,11 @@
 .schedule__add--disabled {
   background-color: #d9d9d9;
   cursor: auto;
+}
+
+/* Sidebar Module */
+.sidebar {
+  border-left: 1px solid black;
+  height: 100%;
+  width: 18%;
 }
