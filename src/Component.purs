@@ -94,10 +94,10 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
                           [ css "schedule__team-cell" ]
                           (toArray $ map roleRow allRoles)
       where
-        employeeLine :: Role -> Employee -> H.ComponentHTML Query
-        employeeLine role e@{ name } =
+        employeeButton :: Role -> Employee -> H.ComponentHTML Query
+        employeeButton role e@{ name } =
           HH.button
-            [ css "selector__button"
+            [ css "schedule__button"
             , HE.onClick (HE.input_ $ Unassign team e day role)
             ]
             [ HH.text name ]
@@ -110,12 +110,19 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
             ]
             [ HH.text "+" ]
 
+        roleLabel :: Role -> H.ComponentHTML Query
+        roleLabel role =
+          HH.span
+            [ css "schedule__row-label" ]
+            [ HH.text $ (show role) <> ": " ]
+
         roleRow :: Role -> H.ComponentHTML Query
         roleRow role =
           HH.div
             [ css "schedule__role-row" ] $
-            [ HH.span_ [ HH.text $ (show role) <> ": " ]
-            ] <> (map (employeeLine role) $ getAssigments team day role) <> [ addButton role ]
+            [ roleLabel role ]
+              <> (map (employeeButton role) $ getAssigments team day role)
+              <> [ addButton role ]
 
     teamDisplay :: Team -> Array (H.ComponentHTML Query)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)

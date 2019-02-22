@@ -38,7 +38,7 @@
 .schedule {
   display: grid;
 
-  grid-template-columns: [teams] 15% repeat(5, 17% [day]);
+  grid-template-columns: [teams] 10% repeat(5, 18% [day]);
   grid-template-rows: [days] 20px;
 }
 
@@ -49,12 +49,36 @@
 .schedule__team-cell {
   height: 250px;
   padding: 5px;
+  border: 1px solid black;
+}
+
+.schedule__row-label {
+  margin-right: 5px;
 }
 
 .schedule__role-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+
   padding-bottom: 5px;
+}
+
+.schedule__button {
+  height: 35px;
+  padding: 0px 15px;
+  margin-right: 5px;
+
+  background: transparent;
+  border: 2px solid #0099CC;
+  border-radius: 5px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.schedule__button:hover {
+  background-color: #ff9999;
 }
 
 .schedule__add {
