@@ -37,10 +37,13 @@ unassignEmployeeFromState t e d r s@{ teams } = s { teams = newTeams }
     newTeams = cons (unassignEmployee t e d r) (delete t teams)
 
 assignEmployeeFromState:: Team -> Employee -> Day -> Role -> State -> State
-assignEmployeeFromState t e d r s@{ teams } = s { teams = newTeams }
-  where
-    newTeams :: Array Team
-    newTeams = cons (assignEmployee t e d r) (delete t teams)
+assignEmployeeFromState t e d r s@{ teams } =
+  if canAssign t e d r
+  then s { teams = newTeams }
+  else s
+    where
+      newTeams :: Array Team
+      newTeams = cons (assignEmployee t e d r) (delete t teams)
 
 ---- Employees Display ----
 
@@ -92,7 +95,7 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
     teamCell :: Team -> Day -> H.ComponentHTML Query
     teamCell team day = HH.span
                           [ css "schedule__team-cell" ]
-                          (toArray $ map roleRow allRoles)
+                          (toArray $ map (roleRow day) allRoles)
       where
         employeeButton :: Role -> Employee -> H.ComponentHTML Query
         employeeButton role e@{ name } =
@@ -102,13 +105,16 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
             ]
             [ HH.text name ]
 
-        addButton :: Role -> H.ComponentHTML Query
-        addButton role =
-          HH.button
-            [ css "schedule__add"
-            , HE.onClick (HE.input_ $ Assign team state.selected day role)
-            ]
-            [ HH.text "+" ]
+        addButton :: Day -> Role -> H.ComponentHTML Query
+        addButton day role =
+          let classes = if canAssign team state.selected day role
+                        then "schedule__add"
+                        else "schedule__add schedule__add--disabled"
+          in HH.button
+               [ css classes
+               , HE.onClick (HE.input_ $ Assign team state.selected day role)
+               ]
+               [ HH.text "+" ]
 
         roleLabel :: Role -> H.ComponentHTML Query
         roleLabel role =
@@ -116,13 +122,13 @@ teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
             [ css "schedule__row-label" ]
             [ HH.text $ (show role) <> ": " ]
 
-        roleRow :: Role -> H.ComponentHTML Query
-        roleRow role =
+        roleRow :: Day -> Role -> H.ComponentHTML Query
+        roleRow day role =
           HH.div
             [ css "schedule__role-row" ] $
             [ roleLabel role ]
               <> (map (employeeButton role) $ getAssigments team day role)
-              <> [ addButton role ]
+              <> [ addButton day role ]
 
     teamDisplay :: Team -> Array (H.ComponentHTML Query)
     teamDisplay team = [ teamHeader team ] <> (map (teamCell team) days)

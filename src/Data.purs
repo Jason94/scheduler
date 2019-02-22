@@ -3,6 +3,7 @@ module App.Data where
 import Prelude
 
 import Data.Array (delete, filter, nubEq, snoc, sortWith)
+import Data.Array as Arr
 import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
 import Data.Foldable (foldl)
 import Data.Map (Map, empty, insert, lookup)
@@ -60,6 +61,10 @@ allEmployees =
   : ivan
   : singleton { name: "Jason", roles: singleton Programmer }
 
+-- | Check if x is in the array
+contains :: forall a. Eq a => a -> Array a -> Boolean
+contains x arr = isJust $ Arr.elemIndex x arr
+
 -- | Check if an employee has a given role
 hasRole :: Role -> Employee -> Boolean
 hasRole role { roles } = isJust $ elemIndex role roles
@@ -113,6 +118,12 @@ assignEmployee team employee day role = team { roleAssignments = newAssignments 
     newAssignments =
       let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
       in insert day roleMap team.roleAssignments
+
+-- | An employee can be assigned if they have the right role and aren't on the team.
+canAssign :: Team -> Employee -> Day -> Role -> Boolean
+canAssign team employee day role =
+  hasRole role employee
+    && not (contains employee (getAssigments team day role))
 
 -- | Remove an employee from the schedule. No-op if not assigned as such.
 unassignEmployee :: Team -> Employee -> Day -> Role -> Team

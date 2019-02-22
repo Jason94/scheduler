@@ -94,6 +94,11 @@
   user-select: none;
 }
 
-.schedule__add:hover {
+.schedule__add:not(.schedule__add--disabled):hover {
   background-color: #B5FFC8;
+}
+
+.schedule__add--disabled {
+  background-color: #d9d9d9;
+  cursor: auto;
 }
