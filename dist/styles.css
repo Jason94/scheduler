@@ -129,7 +129,12 @@
 
 /* Sidebar Module */
 .sidebar {
-  border-left: 1px solid black;
-  height: 100%;
+  border-left: 1.5px solid black;
+  min-height: 100%;
   width: 18%;
+
+  margin-top: -10px;
+  margin-bottom: -20px;
+  margin-left: 5px;
+  padding: 10px;
 }

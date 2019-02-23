@@ -2,9 +2,12 @@ module Component where
 
 import App.Data
 import Prelude
+import Utils
+import Warnings
 
 import Data.Array (concatMap, cons, delete, foldl)
 import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
+import Data.Array.NonEmpty as NEArr
 import Data.Map (keys, lookup)
 import Data.Maybe (Maybe(..))
 import Data.Set (toUnfoldable)
@@ -29,7 +32,7 @@ data Query a =
 
 type State =
   { selected :: Employee
-  , teams :: Array Team
+  , teams :: NonEmptyArray Team
   }
 
 -- | Select an employee to be inserted into the schedule
@@ -39,8 +42,8 @@ selectEmployee employee = _ { selected = employee }
 unassignEmployeeFromState :: Team -> Employee -> Day -> Role -> State -> State
 unassignEmployeeFromState t e d r s@{ teams } = s { teams = newTeams }
   where
-    newTeams :: Array Team
-    newTeams = cons (unassignEmployee t e d r) (delete t teams)
+    newTeams :: NonEmptyArray Team
+    newTeams = updateEq t (unassignEmployee t e d r) teams
 
 assignEmployeeFromState:: Team -> Employee -> Day -> Role -> State -> State
 assignEmployeeFromState t e d r s@{ teams } =
@@ -48,14 +51,14 @@ assignEmployeeFromState t e d r s@{ teams } =
   then s { teams = newTeams }
   else s
     where
-      newTeams :: Array Team
-      newTeams = cons (assignEmployee t e d r) (delete t teams)
+      newTeams :: NonEmptyArray Team
+      newTeams = updateEq t (assignEmployee t e d r) teams
 
 assignEmployeeAllDaysFromState :: Team -> Employee -> Role -> State -> State
 assignEmployeeAllDaysFromState t e r s@{ teams } = s { teams = newTeams }
   where
-    newTeams :: Array Team
-    newTeams = cons (assignEmployeeAllDays t e r) (delete t teams)
+    newTeams :: NonEmptyArray Team
+    newTeams = updateEq t (assignEmployeeAllDays t e r) teams
 
 unassignAllFromState :: State -> State
 unassignAllFromState s@{ teams } = s { teams = map unassignAll teams }
@@ -120,7 +123,7 @@ addFiveButtons state team =
         [ HH.text $ show role ]
 
 teamDisplays :: State -> Array (H.ComponentHTML Query)
-teamDisplays state = concatMap teamDisplay (sortTeams state.teams)
+teamDisplays state = concatMap teamDisplay (toArray $ sortTeams state.teams)
   where
     teamHeader :: Team -> H.ComponentHTML Query
     teamHeader team@{ name } = HH.div_
@@ -186,13 +189,25 @@ scheduleDisplay state =
         $ dayDisplays <> (teamDisplays state)
     ]
 ----       Sidebar     ----
+warnings :: State -> H.ComponentHTML Query
+warnings state =
+  HH.ul_
+    (map warningDisplay $ compileAllWarnings state.teams (toArray allEmployees) (toArray allRoles))
+  where
+    warningDisplay :: Warning -> H.ComponentHTML Query
+    warningDisplay { message } = HH.li_ [ HH.text message ]
+
 sidebar :: State -> H.ComponentHTML Query
 sidebar state =
   HH.div
     [ css "sidebar" ]
     [ HH.button
-        [ HE.onClick $ HE.input_ UnassignAll ]
+        [ HE.onClick $ HE.input_ UnassignAll
+        , css "selector__button"
+        ]
         [ HH.text "Clear All" ]
+    , HH.br_
+    , warnings state
     ]
 
 ----   Main Component  ----
@@ -208,7 +223,7 @@ component employees =
     initialState :: State
     initialState =
       { selected: head employees
-      , teams: toArray allTeams
+      , teams: allTeams
       }
 
     render :: State -> H.ComponentHTML Query

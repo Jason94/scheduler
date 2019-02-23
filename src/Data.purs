@@ -1,10 +1,11 @@
 module App.Data where
 
 import Prelude
+import Utils
 
-import Data.Array (delete, filter, length, nubEq, snoc, sortWith)
+import Data.Array (concatMap, delete, filter, length, nubEq, snoc)
 import Data.Array as Arr
-import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, toArray, (:))
+import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, sortWith, toArray, (:))
 import Data.Foldable (fold, foldMap, foldl, sum)
 import Data.Map (Map, empty, insert, lookup, values)
 import Data.Maybe (fromMaybe, isJust)
@@ -91,7 +92,7 @@ type Team =
   , roleAssignments :: Map Day (Map Role (Array Employee))
   }
 
-sortTeams :: Array Team -> Array Team
+sortTeams :: NonEmptyArray Team -> NonEmptyArray Team
 sortTeams = sortWith (_.name)
 
 emptyTeam :: String -> Map Role Int -> Team
@@ -162,6 +163,17 @@ unassignEmployee team employee day role = team { roleAssignments = newAssignment
     newAssignments =
       let roleMap = insert role newEmployees $ fromMaybe empty (lookup day team.roleAssignments)
       in insert day roleMap team.roleAssignments
+
+-- | Get the days an employee is unassigned on a team.
+daysUnassigned :: Employee -> Team -> Array Day
+daysUnassigned employee team = filter (not <<< isAssigned) days
+  where
+    isAssigned :: Day -> Boolean
+    isAssigned day = contains employee $ concatMap (getAssigments team day) (toArray allRoles)
+
+-- | Get the days an employee is unassigned on all teams.
+daysUnassignedAll :: NonEmptyArray Team -> Employee -> Array Day
+daysUnassignedAll teams employee = intersectAll $ map (daysUnassigned employee) teams
 
 -- | Remove all employees assigned.
 unassignAll :: Team -> Team
