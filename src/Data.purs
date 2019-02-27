@@ -175,6 +175,17 @@ daysUnassigned employee team = filter (not <<< isAssigned) days
 daysUnassignedAll :: NonEmptyArray Team -> Employee -> Array Day
 daysUnassignedAll teams employee = intersectAll $ map (daysUnassigned employee) teams
 
+-- | Check if a team is understaffed on a given day for a particular role.
+isUnderStaffed :: Team -> Role -> Day -> Boolean
+isUnderStaffed team role day =
+  let target = fromMaybe 0 $ lookup role team.roleSlots
+      actual = numAssigned day role team
+  in actual >= target
+
+-- | Get the days a team is understaffed for a particular role.
+daysUnderStaffed :: Team -> Role -> Array Day
+daysUnderStaffed team role = filter (isUnderStaffed team role) days
+
 -- | Remove all employees assigned.
 unassignAll :: Team -> Team
 unassignAll = _ { roleAssignments = empty }
