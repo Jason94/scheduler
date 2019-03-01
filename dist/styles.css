@@ -138,3 +138,18 @@
   margin-left: 5px;
   padding: 10px;
 }
+
+.sidebar__warning {
+}
+
+.sidebar__warning--low {
+  background-color: yellow;
+}
+
+.sidebar__warning--medium {
+  background-color: orange;
+}
+
+.sidebar__warning--high {
+  background-color: red;
+}

@@ -180,7 +180,7 @@ isUnderStaffed :: Team -> Role -> Day -> Boolean
 isUnderStaffed team role day =
   let target = fromMaybe 0 $ lookup role team.roleSlots
       actual = numAssigned day role team
-  in actual >= target
+  in actual < target
 
 -- | Get the days a team is understaffed for a particular role.
 daysUnderStaffed :: Team -> Role -> Array Day

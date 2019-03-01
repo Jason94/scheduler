@@ -189,13 +189,21 @@ scheduleDisplay state =
         $ dayDisplays <> (teamDisplays state)
     ]
 ----       Sidebar     ----
+warningClassName :: Warning -> String
+warningClassName { severity: Low } = "sidebar__warning sidebar__warning--low"
+warningClassName { severity: Medium } = "sidebar__warning sidebar__warning--medium"
+warningClassName { severity: High } = "sidebar__warning sidebar__warning--high"
+
 warnings :: State -> H.ComponentHTML Query
 warnings state =
   HH.ul_
     (map warningDisplay $ compileAllWarnings state.teams (toArray allEmployees) (toArray allRoles))
   where
     warningDisplay :: Warning -> H.ComponentHTML Query
-    warningDisplay { message } = HH.li_ [ HH.text message ]
+    warningDisplay w@{ message } =
+      HH.li
+        [ css $ warningClassName w ]
+        [ HH.text message ]
 
 sidebar :: State -> H.ComponentHTML Query
 sidebar state =

@@ -3,7 +3,7 @@ module Warnings where
 import App.Data
 import Prelude
 
-import Data.Array (concatMap, mapMaybe)
+import Data.Array (catMaybes, concatMap, mapMaybe)
 import Data.Array.NonEmpty (NonEmptyArray, singleton, toArray)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith)
@@ -44,21 +44,23 @@ notAssigned teams employees roles = mapMaybe forEmployee employees
         }
 
 underStaffed :: WarningMachine
-underStaffed teams _ roles = do
+underStaffed teams _ roles = catMaybes do
   team <- toArray teams
   role <- roles
-  forTeamRole team role
+  pure $ forTeamRole team role
     where
-      makeWarning :: Team -> Role -> Array Day -> Warning
-      makeWarning team role theDays =
-        { message: (team.name " is understaffed for "
-           <> (show role)
-           <> " on "
-           <> (joinWith ", " $ map show theDays))
-        , severity: Medium
-        }
+      makeWarning :: Team -> Role -> Array Day -> Maybe Warning
+      makeWarning team role = case _ of
+        [] -> Nothing
+        theDays -> Just $
+          { message: (show role) <> "s on "
+            <> team.name
+            <> " are understaffed on "
+            <> (joinWith ", " $ map show theDays)
+          , severity: Medium
+          }
 
-      forTeamRole :: Team -> Role -> Warning
+      forTeamRole :: Team -> Role -> Maybe Warning
       forTeamRole team role = makeWarning team role $ daysUnderStaffed team role
 
 compileAllWarnings :: NonEmptyArray Team -> Array Employee -> Array Role -> Array Warning
