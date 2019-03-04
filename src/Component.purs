@@ -88,7 +88,7 @@ assignStandard s =
    assignEmployeeAllDaysFromState reviewEfiling donna Analyst <<<
    assignEmployeeAllDaysFromState reviewEfiling ellen Analyst <<<
    assignEmployeeAllDaysFromState reviewEfiling frank Manager <<<
-   assignEmployeeAllDaysFromState sccaEfiling travis Programmer <<<
+   assignEmployeeAllDaysFromState reviewEfiling travis Programmer <<<
    assignEmployeeAllDaysFromState sccaEfiling jason Programmer <<<
    assignEmployeeAllDaysFromState sccaEfiling doug Programmer) s
 
@@ -149,7 +149,7 @@ addFiveButtons state team =
         [ css $ className role
         , HE.onClick (HE.input_ $ AssignAllDays team state.selected role)
         ]
-        [ HH.text $ show role ]
+        [ HH.text $ show role <> " (" <> (show $ slotsForRole team role) <> ")" ]
 
 teamDisplays :: State -> Array (H.ComponentHTML Query)
 teamDisplays state = concatMap teamDisplay (toArray $ sortTeams state.teams)

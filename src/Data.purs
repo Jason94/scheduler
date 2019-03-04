@@ -119,6 +119,9 @@ type Team =
 sameTeam :: Team -> Team -> Boolean
 sameTeam t1 t2 = t1.name == t2.name
 
+slotsForRole :: Team -> Role -> Int
+slotsForRole team role = fromMaybe 0 $ lookup role team.roleSlots
+
 sortTeams :: NonEmptyArray Team -> NonEmptyArray Team
 sortTeams = sortWith (_.name)
 
