@@ -2,8 +2,9 @@ module Warnings where
 
 import App.Data
 import Prelude
+import Utils
 
-import Data.Array (catMaybes, concatMap, mapMaybe)
+import Data.Array (catMaybes, concatMap, length, mapMaybe)
 import Data.Array.NonEmpty (NonEmptyArray, singleton, toArray)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith)
@@ -63,5 +64,15 @@ underStaffed teams _ roles = catMaybes do
       forTeamRole :: Team -> Role -> Maybe Warning
       forTeamRole team role = makeWarning team role $ daysUnderStaffed team role
 
+notOnStandard :: WarningMachine
+notOnStandard teams _ _ = case findEq (sameTeam sccaEfiling) teams of
+  Nothing -> []
+  Just currentSccaEfiling ->
+    if length (daysAssigned currentSccaEfiling Programmer doug) == 0
+    then [{ message: "Doug is not assigned to Scca-EFiling"
+          , severity: Low
+          }]
+    else []
+
 compileAllWarnings :: NonEmptyArray Team -> Array Employee -> Array Role -> Array Warning
-compileAllWarnings = compileWarnings $ [notAssigned, underStaffed]
+compileAllWarnings = compileWarnings $ [notOnStandard, notAssigned, underStaffed]

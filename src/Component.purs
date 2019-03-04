@@ -6,12 +6,14 @@ import Utils
 import Warnings
 
 import Data.Array (concatMap, cons, delete, foldl)
-import Data.Array.NonEmpty (NonEmptyArray, head, reverse, singleton, toArray, (:))
+import Data.Array.NonEmpty (NonEmptyArray, findIndex, head, index, reverse, singleton, toArray, (:))
 import Data.Array.NonEmpty as NEArr
 import Data.Map (keys, lookup)
 import Data.Maybe (Maybe(..))
 import Data.Set (toUnfoldable)
 import Data.String (toLower)
+import Effect.Console (log, logShow)
+import Effect.Unsafe (unsafePerformEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -27,6 +29,7 @@ data Query a =
   Select Employee a
   | Assign Team Employee Day Role a
   | AssignAllDays Team Employee Role a
+  | AssignStandard a
   | Unassign Team Employee Day Role a
   | UnassignAll a
 
@@ -51,17 +54,43 @@ assignEmployeeFromState t e d r s@{ teams } =
   then s { teams = newTeams }
   else s
     where
+      upToDateTeamM :: Maybe Team
+      upToDateTeamM = do
+        i <- findIndex (sameTeam t) teams
+        index teams i
+
       newTeams :: NonEmptyArray Team
-      newTeams = updateEq t (assignEmployee t e d r) teams
+      newTeams = case upToDateTeamM of
+        Just upToDateTeam -> updateEq upToDateTeam (assignEmployee upToDateTeam e d r) teams
+        Nothing -> teams
 
 assignEmployeeAllDaysFromState :: Team -> Employee -> Role -> State -> State
 assignEmployeeAllDaysFromState t e r s@{ teams } = s { teams = newTeams }
   where
+    teamToUpdateM :: Maybe Team
+    teamToUpdateM = findEq (sameTeam t) teams
+
     newTeams :: NonEmptyArray Team
-    newTeams = updateEq t (assignEmployeeAllDays t e r) teams
+    newTeams = case teamToUpdateM of
+      Just teamToUpdate -> updateEq teamToUpdate (assignEmployeeAllDays teamToUpdate e r) teams
+      Nothing -> teams
 
 unassignAllFromState :: State -> State
 unassignAllFromState s@{ teams } = s { teams = map unassignAll teams }
+
+assignStandard :: State -> State
+assignStandard s =
+  (assignEmployeeAllDaysFromState support judy Analyst <<<
+   assignEmployeeAllDaysFromState support ellen Analyst <<<
+   assignEmployeeAllDaysFromState support amanda Manager <<<
+   assignEmployeeAllDaysFromState reviewEfiling adam Programmer <<<
+   assignEmployeeAllDaysFromState reviewEfiling ivan Programmer <<<
+   assignEmployeeAllDaysFromState reviewEfiling donna Analyst <<<
+   assignEmployeeAllDaysFromState reviewEfiling ellen Analyst <<<
+   assignEmployeeAllDaysFromState reviewEfiling frank Manager <<<
+   assignEmployeeAllDaysFromState sccaEfiling travis Programmer <<<
+   assignEmployeeAllDaysFromState sccaEfiling jason Programmer <<<
+   assignEmployeeAllDaysFromState sccaEfiling doug Programmer) s
 
 ---- Employees Display ----
 
@@ -196,7 +225,8 @@ warningClassName { severity: High } = "sidebar__warning sidebar__warning--high"
 
 warnings :: State -> H.ComponentHTML Query
 warnings state =
-  HH.ul_
+  HH.ul
+    [ css "sidebar__warning-list" ]
     (map warningDisplay $ compileAllWarnings state.teams (toArray allEmployees) (toArray allRoles))
   where
     warningDisplay :: Warning -> H.ComponentHTML Query
@@ -214,26 +244,31 @@ sidebar state =
         , css "selector__button"
         ]
         [ HH.text "Clear All" ]
+    , HH.button
+        [ HE.onClick $ HE.input_ AssignStandard
+        , css "selector__button"
+        ]
+        [ HH.text "Assign to standard teams" ]
     , HH.br_
     , warnings state
     ]
 
 ----   Main Component  ----
+initialState :: NonEmptyArray Employee -> State
+initialState employees =
+  { selected: head employees
+  , teams: allTeams
+  }
+
 component :: forall m. NonEmptyArray Employee -> H.Component HH.HTML Query Unit Void m
 component employees =
   H.component
-    { initialState: const initialState
+    { initialState: const $ initialState employees
     , render
     , eval
     , receiver: const Nothing
     }
   where
-    initialState :: State
-    initialState =
-      { selected: head employees
-      , teams: allTeams
-      }
-
     render :: State -> H.ComponentHTML Query
     render state =
       HH.div
@@ -256,6 +291,9 @@ component employees =
         pure next
       Assign team employee day role next -> do
         _ <- H.modify_ $ assignEmployeeFromState team employee day role
+        pure next
+      AssignStandard next -> do
+        _ <- H.modify_ $ assignStandard
         pure next
       Unassign team employee day role next -> do
         _ <- H.modify_ $ unassignEmployeeFromState team employee day role

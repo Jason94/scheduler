@@ -3,9 +3,9 @@ module App.Data where
 import Prelude
 import Utils
 
-import Data.Array (concatMap, delete, filter, length, nubEq, snoc)
+import Data.Array (concatMap, delete, filter, length, mapMaybe, nubEq, snoc)
 import Data.Array as Arr
-import Data.Array.NonEmpty (NonEmptyArray, elemIndex, singleton, sortWith, toArray, (:))
+import Data.Array.NonEmpty (NonEmptyArray, catMaybes, elemIndex, singleton, sortWith, toArray, (:))
 import Data.Foldable (fold, foldMap, foldl, sum)
 import Data.Map (Map, empty, insert, lookup, values)
 import Data.Maybe (fromMaybe, isJust)
@@ -49,18 +49,39 @@ ivan = { name: "Ivan", roles: singleton Programmer }
 frank :: Employee
 frank = { name: "Frank", roles: Analyst : singleton Manager }
 
+amanda :: Employee
+amanda = { name: "Amanda", roles: singleton Manager }
+
+donna :: Employee
+donna = { name: "Donna", roles: singleton Analyst }
+
+ellen :: Employee
+ellen = { name: "Ellen", roles: singleton Analyst }
+
+judy :: Employee
+judy = { name: "Judy", roles: singleton Analyst }
+
+travis :: Employee
+travis = { name: "Travis", roles: Manager : singleton Programmer }
+
+doug :: Employee
+doug = { name: "Doug", roles: singleton Programmer }
+
+jason :: Employee
+jason = { name: "Jason", roles: singleton Programmer }
+
 allEmployees :: NonEmptyArray Employee
 allEmployees =
-  { name: "Amanda", roles: singleton Manager }
+  amanda
   : frank
-  : { name: "Donna", roles: singleton Analyst }
-  : { name: "Ellen", roles: singleton Analyst }
-  : { name: "Judy", roles: singleton Analyst }
-  : { name: "Travis", roles: Manager : singleton Programmer }
-  : { name: "Doug", roles: singleton Programmer }
+  : donna
+  : ellen
+  : judy
+  : travis
+  : doug
   : adam
   : ivan
-  : singleton { name: "Jason", roles: singleton Programmer }
+  : singleton jason
 
 -- | Check if x is in the array
 contains :: forall a. Eq a => a -> Array a -> Boolean
@@ -92,6 +113,10 @@ type Team =
   , roleAssignments :: Map Day (Map Role (Array Employee))
   }
 
+-- | Two teams are 'the same' if their names are the same
+sameTeam :: Team -> Team -> Boolean
+sameTeam t1 t2 = t1.name == t2.name
+
 sortTeams :: NonEmptyArray Team -> NonEmptyArray Team
 sortTeams = sortWith (_.name)
 
@@ -118,6 +143,14 @@ getAssigments :: Team -> Day -> Role -> Array Employee
 getAssigments { roleAssignments } day role = fromMaybe [] $ do
   roles <- lookup day roleAssignments
   lookup role roles
+
+-- | Get the days this employee is assigned to this role on this team
+daysAssigned :: Team -> Role -> Employee -> Array Day
+daysAssigned team role employee = filter
+  (\d -> isJust do
+      roleMap <- lookup d team.roleAssignments
+      lookup role roleMap)
+  days
 
 -- | Get the number of employees assigned to a particular day for a particular role.
 numAssigned :: Day -> Role -> Team -> Int
