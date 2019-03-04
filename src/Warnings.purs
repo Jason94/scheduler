@@ -4,13 +4,15 @@ import App.Data
 import Prelude
 import Utils
 
-import Data.Array (catMaybes, concatMap, length, mapMaybe)
+import Data.Array (catMaybes, concatMap, length, mapMaybe, sortWith)
 import Data.Array.NonEmpty (NonEmptyArray, singleton, toArray)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith)
+import Effect.Unsafe
+import Effect.Console
 import Utils (toMaybe)
 
-data Severity = Low | Medium | High
+data Severity = High | Medium | Low
 derive instance eqSeverity :: Eq Severity
 derive instance ordSeverity :: Ord Severity
 instance showSeverity :: Show Severity where
@@ -74,5 +76,18 @@ notOnStandard teams _ _ = case findEq (sameTeam sccaEfiling) teams of
           }]
     else []
 
+notOnStandardTooLong :: WarningMachine
+notOnStandardTooLong teams _ _ = case findEq (sameTeam reviewEfiling) teams of
+  Nothing -> []
+  Just currentSccaEfiling ->
+    if length (daysAssigned currentSccaEfiling Programmer adam) == 0
+    then [{ message: "Adam has not been assigned to EFiling-Review for 3 weeks"
+          , severity: High
+          }]
+    else []
+
+
 compileAllWarnings :: NonEmptyArray Team -> Array Employee -> Array Role -> Array Warning
-compileAllWarnings = compileWarnings $ [notOnStandard, notAssigned, underStaffed]
+compileAllWarnings teams employees roles =
+  sortWith (_.severity)
+    $ compileWarnings [notOnStandardTooLong, notOnStandard, notAssigned, underStaffed] teams employees roles
