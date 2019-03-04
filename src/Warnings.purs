@@ -1,6 +1,8 @@
 module Warnings where
 
 import App.Data
+import Effect.Console
+import Effect.Unsafe
 import Prelude
 import Utils
 
@@ -8,8 +10,6 @@ import Data.Array (catMaybes, concatMap, length, mapMaybe, sortWith)
 import Data.Array.NonEmpty (NonEmptyArray, singleton, toArray)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith)
-import Effect.Unsafe
-import Effect.Console
 import Utils (toMaybe)
 
 data Severity = High | Medium | Low
@@ -90,4 +90,8 @@ notOnStandardTooLong teams _ _ = case findEq (sameTeam reviewEfiling) teams of
 compileAllWarnings :: NonEmptyArray Team -> Array Employee -> Array Role -> Array Warning
 compileAllWarnings teams employees roles =
   sortWith (_.severity)
-    $ compileWarnings [notOnStandardTooLong, notOnStandard, notAssigned, underStaffed] teams employees roles
+    $ compileWarnings
+        [notOnStandardTooLong, notOnStandard, notAssigned, underStaffed]
+        teams
+        employees
+        roles

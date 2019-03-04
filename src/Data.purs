@@ -1,9 +1,11 @@
 module App.Data where
 
+import Effect.Console
+import Effect.Unsafe
 import Prelude
 import Utils
 
-import Data.Array (concatMap, delete, filter, length, mapMaybe, nubEq, snoc)
+import Data.Array (concatMap, delete, filter, index, length, mapMaybe, nubEq, snoc)
 import Data.Array as Arr
 import Data.Array.NonEmpty (NonEmptyArray, catMaybes, elemIndex, singleton, sortWith, toArray, (:))
 import Data.Foldable (fold, foldMap, foldl, sum)
@@ -149,7 +151,8 @@ daysAssigned :: Team -> Role -> Employee -> Array Day
 daysAssigned team role employee = filter
   (\d -> isJust do
       roleMap <- lookup d team.roleAssignments
-      lookup role roleMap)
+      assignments <- lookup role roleMap
+      Arr.elemIndex employee assignments)
   days
 
 -- | Get the number of employees assigned to a particular day for a particular role.
