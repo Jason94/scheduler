@@ -105,6 +105,10 @@
   background-color: #ff9999;
 }
 
+.schedule__button--selected {
+  background-color: #e39eff;
+}
+
 .schedule__add {
   height: 35px;
   padding: 0px 15px;

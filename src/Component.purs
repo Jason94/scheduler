@@ -175,11 +175,14 @@ teamDisplays state = concatMap teamDisplay (toArray $ sortTeams state.teams)
 
         employeeButton :: Role -> Employee -> H.ComponentHTML Query
         employeeButton role e@{ name } =
-          HH.button
-            [ css "schedule__button"
-            , HE.onClick (HE.input_ $ Unassign team e day role)
-            ]
-            [ HH.text name ]
+          let classNames = if e == state.selected
+                           then "schedule__button schedule__button--selected"
+                           else "schedule__button"
+          in HH.button
+               [ css classNames
+               , HE.onClick (HE.input_ $ Unassign team e day role)
+               ]
+               [ HH.text name ]
 
         addButton :: Role -> H.ComponentHTML Query
         addButton role =
